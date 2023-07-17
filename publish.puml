@@ -1,0 +1,28 @@
+@startuml
+actor Alice
+actor Senior
+participant Astraia_EHR as ehr #lightblue
+box NXIS
+  participant NXIS_convertor as nxis_conv #lightblue
+  participant NXIS_mapping_definitions as nxis_map #lightblue
+  participant astraia_fhir_index as index #lightblue
+end box
+participant FHIR_server as fhir
+Alice -> ehr : register data
+Senior -> ehr: validate data
+ehr -> ehr: trigger
+activate ehr
+  note right: demographic data: on patient save, \nclinical data: on validation
+  ehr -> nxis_conv: xml-message
+  nxis_conv --> ehr: ok
+deactivate
+nxis_conv -> index: CRU atraia-fhir-ids
+activate nxis_conv
+  nxis_conv -> nxis_map: get mapping def
+  nxis_conv -> nxis_conv: map astraia_xml to fhir
+  nxis_conv -> fhir: POST/PUT FHIR-resource(s)
+  fhir --> nxis_conv: 200 ok
+  nxis_conv -> index: write status
+  index --> nxis_conv: ok
+deactivate
+@enduml
